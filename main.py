@@ -38,6 +38,8 @@ def start_handler(update: Update, context: CallbackContext):
 /stop
     """)
 
+
+
 is_running = True
 thread = None
 def start_timer(update: Update, context: CallbackContext):
@@ -45,16 +47,17 @@ def start_timer(update: Update, context: CallbackContext):
         time_str = update.message.text.split(" ")[1]
         hours, minutes, seconds = list(map(int, time_str.split(":")))
         timer = timedelta(hours=hours, minutes=minutes, seconds=seconds)
-        second = timedelta(seconds=1)
+        second = timedelta(seconds=4)
         message_id = update.message.reply_text("========  " + str(timer) + "  ========")["message_id"]
         while str(timer) != "0:00:00" and is_running:
-            time.sleep(1)
+            time.sleep(4)
             timer -= second
             context.bot.editMessageText(chat_id=update.message.chat_id, message_id=message_id, text="========  " + str(timer) + "  ========")
         update.message.reply_text("انتهى الوقت!")
 
     except Exception as error:
         update.message.reply_text("خطأ, مؤقت غير صحيح!")
+        print(error)
 
 def stop_thread(update: Update, context: CallbackContext):
     global is_running
@@ -69,10 +72,49 @@ def start_timer_thread(update: Update, context: CallbackContext):
     thread.start()
 
 
+
+is_running_admin = True
+thread_admin = None
+def start_timer_for_admin(update: Update, context: CallbackContext):
+    try:
+        if update.message.chat.username == "Muhannad_ALmasri":
+            time_str = update.message.text.split(" ")[1]
+            hours, minutes, seconds = list(map(int, time_str.split(":")))
+            timer = timedelta(hours=hours, minutes=minutes, seconds=seconds)
+            second = timedelta(seconds=4)
+            message_id = update.message.bot.send_message("@Muhannad_ALmasri", "========  " + str(timer) + "  ========")["message_id"]
+            while str(timer) != "0:00:00" and is_running:
+                time.sleep(4)
+                timer -= second
+                context.bot.editMessageText(chat_id="@Muhannad_ALmasri", message_id=message_id, text="========  " + str(timer) + "  ========")
+            update.message.bot.send_message("@Muhannad_ALmasri" ,"انتهى الوقت!")
+
+    except Exception as error:
+        update.message.reply_text("خطأ, مؤقت غير صحيح!")
+        print(error)
+
+def stop_thread_for_admin(update: Update, context: CallbackContext):
+    global is_running_admin
+    is_running_admin = False
+
+def start_timer_thread_for_admin(update: Update, context: CallbackContext):
+    global thread_admin
+    global is_running_admin
+    is_running_admin = True
+    thread_admin = threading.Thread(target=start_timer_for_admin, args=(update, context))
+    thread_admin.daemon = True
+    thread_admin.start()
+
+
+
 if __name__ == "__main__":
     updater = Updater(TOKEN, use_context=True)
     updater.dispatcher.add_handler(CommandHandler("start", start_handler))
+
     updater.dispatcher.add_handler(CommandHandler("timer", start_timer_thread))
     updater.dispatcher.add_handler(CommandHandler("stop", stop_thread))
+
+    updater.dispatcher.add_handler(CommandHandler("timer_admin", start_timer_for_admin))
+    updater.dispatcher.add_handler(CommandHandler("stop_admin", stop_thread_for_admin))
 
     run()
